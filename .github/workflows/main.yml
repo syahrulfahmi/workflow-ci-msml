@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 env:
-  CSV_URL: "text-workflow-ci-msml/ulasan_processed_dataset.csv"
+  CSV_URL: "workflow-ci-msml/ulasan_processed_dataset.csv"
   
 jobs:
   build:
