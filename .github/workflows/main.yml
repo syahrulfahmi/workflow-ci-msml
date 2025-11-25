@@ -1,0 +1,98 @@
+name: Workflow-CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+env:
+  CSV_URL: "text-workflow-ci-msml/ulasan_processed_dataset.csv"
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out Repository
+      - uses: actions/checkout@v3
+
+      # Setup Python 3.12.7
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12.7"
+      
+      # Check Env Variables
+      - name: Check Env Variables
+        run: |
+          echo $CSV_URL
+
+      # Install Dependencies
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mlflow tensorflow
+  
+      # Run MLFlow Project
+      - name: Run MLFlow Project
+        run: |
+          mlflow run MLProject --env-manager=local
+
+      # Get Latest MLFlow RUN ID
+      - name: Get Latest MLFlow RUN ID
+        run: |
+          RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+          echo "Latest run_id: $RUN_ID"
+
+      # Build Docker Image
+      - name: Build Docker Image from MLFlow Model
+        run: |
+          mlflow models build-docker \
+            --model-uri "runs:/$RUN_ID/model" \
+            --name "cc"
+
+      # set auth to docker
+      - name: Setup Auth Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # tag docker image
+      - name: Tag Docker Image
+        run: |
+          docker tag cc ${{ secrets.DOCKER_HUB_USERNAME }}/test-workflow-ci-msml:latest
+
+      # push docker image
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/test-workflow-ci-msml:latest
+
+      # # set github user
+      - name: Setup Github User
+        run: |
+           git config --global user.name ${{ secrets.USERNAME }}
+           git config --global user.email ${{ secrets.EMAIL }}
+
+      # set github lfs
+      - name: Setup Github LFS
+        run: |
+           git lfs install
+           git lfs track "mlruns/**"
+           git add .gitattributes
+           git commit -m "Track large files in mlruns with Git LFS" || true
+           git push
+           
+      # Save models to GitHub Repository
+      - name: Save Model to Repository
+        run: |
+          git add mlruns/
+          git commit -m "Save mlruns from CI run"
+          git push

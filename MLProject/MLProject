@@ -1,0 +1,23 @@
+name: project_sentiment_lstm
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      embedding_dim: {type: int, default: 128}
+      lstm_units: {type: int, default: 128}
+      max_words: {type: int, default: 30000}
+      max_len: {type: int, default: 100}
+      batch_size: {type: int, default: 128}
+      epochs: {type: int, default: 20}
+      learning_rate: {type: float, default: 0.001}
+
+    command: "python modelling.py \
+      --embedding_dim {embedding_dim} \
+      --lstm_units {lstm_units} \
+      --max_words {max_words} \
+      --max_len {max_len} \
+      --batch_size {batch_size} \
+      --epochs {epochs} \
+      --learning_rate {learning_rate}"
