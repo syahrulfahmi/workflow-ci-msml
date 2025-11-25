@@ -68,12 +68,12 @@ jobs:
       # tag docker image
       - name: Tag Docker Image
         run: |
-          docker tag cc ${{ secrets.DOCKER_HUB_USERNAME }}/test-workflow-ci-msml:latest
+          docker tag cc ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci-msml:latest
 
       # push docker image
       - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/test-workflow-ci-msml:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci-msml:latest
 
       # # set github user
       - name: Setup Github User
